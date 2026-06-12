@@ -14,6 +14,9 @@ ecobi-design-preview.html
 output/
 outputs/
 public/assets/
+docs/
+mvp/
+MVP_ARCHITECTURE.md
 .env
 .env.*
 !.env.example

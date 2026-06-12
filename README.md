@@ -33,6 +33,16 @@ Ecobi는 사용자의 목표 체중, 하루 권장 칼로리, 알레르기, 음�
 - 회복: 초과 섭취 또는 예산 초과 이후의 조정 행동을 안내합니다.
 - 마이페이지: 목표, 예산, 알레르기, 음식 선호도, 계정 정보를 관리합니다.
 
+## 화면 미리보기
+
+| 홈 | 추천 | 기록 |
+|---|---|---|
+| <img src="assets/readme/home.jpg" width="220" alt="홈 화면" /> | <img src="assets/readme/recommendation.jpg" width="220" alt="추천 화면" /> | <img src="assets/readme/record-sheet.jpg" width="220" alt="기록 선택 화면" /> |
+
+| 회복 | 마이페이지 |
+|---|---|
+| <img src="assets/readme/recovery.jpg" width="220" alt="회복 화면" /> | <img src="assets/readme/mypage.jpg" width="220" alt="마이페이지 화면" /> |
+
 ## 기술 스택
 
 | 영역 | 사용 기술 |
@@ -134,9 +144,3 @@ chmod +x deploy-split.sh
 chmod +x deploy-frontend-firebase.sh
 ./deploy-frontend-firebase.sh
 ```
-
-## 문서
-
-- [API v1 목록](docs/API_V1.md)
-- [리팩토링 보고서](docs/MVP_REFACTOR_REPORT.md)
-- [ML 추천 모듈](ML/README.md)
