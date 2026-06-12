@@ -1,0 +1,20 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.api
+      - -t
+      - $_API_IMAGE
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.ml
+      - -t
+      - $_ML_IMAGE
+      - .
+images:
+  - $_API_IMAGE
+  - $_ML_IMAGE

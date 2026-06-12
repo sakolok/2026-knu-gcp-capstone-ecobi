@@ -1,0 +1,48 @@
+{
+  "name": "ecobi-service-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "NODE_OPTIONS=--no-warnings tsx watch server/index.ts",
+    "dev:web": "vite --host 127.0.0.1",
+    "start:api": "NODE_OPTIONS=--no-warnings tsx server/index.ts",
+    "db:seed": "NODE_OPTIONS=--no-warnings tsx server/scripts/seed.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.server.json --noEmit && vite build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "aos": "^2.3.4",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "font-awesome": "^4.7.0",
+    "lottie-react": "^2.4.1",
+    "pg": "^8.21.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/aos": "^3.0.8",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/node": "^25.0.0",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.15"
+  }
+}

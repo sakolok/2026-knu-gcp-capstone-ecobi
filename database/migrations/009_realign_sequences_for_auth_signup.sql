@@ -1,0 +1,1 @@
+-- SQLite AUTOINCREMENT keeps rowid state in sqlite_sequence automatically for this schema.

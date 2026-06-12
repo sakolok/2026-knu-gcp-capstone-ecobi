@@ -1,0 +1,9 @@
+.DS_Store
+.codex-qa/
+.env
+.git/
+dist/
+node_modules/
+database/*.sqlite
+database/*.sqlite-*
+npm-debug.log*
