@@ -1,4 +1,4 @@
-/* React integration overrides on top of mvp/styles.css. Keep this small. */
+/* Application styles for the React mobile web app. */
 @font-face {
   font-family: "Moneygraphy Rounded";
   src: url("/fonts/Moneygraphy-Rounded.eot");

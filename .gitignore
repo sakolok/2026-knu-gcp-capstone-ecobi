@@ -8,6 +8,7 @@ database/*.sqlite-*
 AGENTS.md
 CLAUDE.md
 DESIGN.md
+*_REVIEW.md
 *.code-workspace
 ecobi-app-prototype.html
 ecobi-design-preview.html
@@ -17,6 +18,8 @@ public/assets/
 docs/
 mvp/
 MVP_ARCHITECTURE.md
+*_ARCHITECTURE.md
+erd_schema*.sql
 .env
 .env.*
 !.env.example

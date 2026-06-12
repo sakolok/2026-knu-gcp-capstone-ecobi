@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "font-awesome/css/font-awesome.min.css";
 import "aos/dist/aos.css";
-import "../mvp/styles.css";
 import "./styles/app.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
