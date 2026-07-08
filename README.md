@@ -167,11 +167,9 @@ chmod +x deploy-frontend-firebase.sh
 
 ## Team
 
-| 이름 | 역할 | 담당 |
-|-----|-----|-----|
-| 강옥일 | PM / GCP Architecture / Full-stack | 문제 정의, 역할 조율, GCP 배포 아키텍처 설계, API-ML 비동기 연결, 프론트엔드/백엔드 통합 구현 |
-| 김민아 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
-| 최지우 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
-| 현지민 | Backend REST API | REST API 설계, 요청/응답 구조 정리, 백엔드 서비스 로직 구현 |
-| 허지환 | Database | 사용자, 식단, 예산, 추천 데이터 중심의 ERD 및 DB 구조 설계 |
-| 김진섭 | AI Recommendation | MILP, LightFM, XGBoost, MMR 기반 추천 알고리즘 설계 및 실험 |
+- **강옥일**: PM / GCP Architecture / Full-stack - 문제 정의, 역할 조율, GCP 배포 아키텍처 설계, API-ML 비동기 연결, 프론트엔드/백엔드 통합 구현
+- **김민아**: Frontend - 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발
+- **최지우**: Frontend - 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발
+- **현지민**: Backend REST API - REST API 설계, 요청/응답 구조 정리, 백엔드 서비스 로직 구현
+- **허지환**: Database - 사용자, 식단, 예산, 추천 데이터 중심의 ERD 및 DB 구조 설계
+- **김진섭**: AI Recommendation - MILP, LightFM, XGBoost, MMR 기반 추천 알고리즘 설계 및 실험
