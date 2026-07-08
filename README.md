@@ -71,6 +71,31 @@ Ecobi의 추천은 사용자의 끼니, 남은 예산, 남은 칼로리, 음식 
 4. MILP 후보 생성 후 LightFM retrieval, XGBoost rerank, macro fit, MMR 반복 패널티를 반영해 최종 후보를 정렬합니다.
 5. 추천 결과는 `recommendation_candidates`에 저장되고, API는 polling 결과와 Gemini 기반 추천 설명을 반환합니다.
 
+## Calorie Calculation
+
+사용자의 신장, 체중, 나이, 성별, 활동량을 기반으로 Mifflin-St Jeor 공식으로 BMR을 계산하고, 활동계수를 곱해 TDEE를 산출합니다.
+
+```text
+남성 BMR = 10 × 체중(kg) + 6.25 × 키(cm) - 5 × 나이 + 5
+여성 BMR = 10 × 체중(kg) + 6.25 × 키(cm) - 5 × 나이 - 161
+
+TDEE = BMR × 활동계수
+```
+
+| 활동 레벨 | 활동계수 |
+|---|---:|
+| sedentary | 1.2 |
+| light | 1.375 |
+| moderate | 1.55 |
+| active | 1.725 |
+| athlete | 1.9 |
+
+```text
+감량 목표 = TDEE - 300 kcal
+유지 목표 = TDEE
+증량 목표 = TDEE + 250 kcal
+```
+
 ## Data Model
 
 | 테이블 | 역할 |
