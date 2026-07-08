@@ -168,7 +168,7 @@ chmod +x deploy-frontend-firebase.sh
 ## Team
 
 | 이름 | 역할 | 담당 |
-|-----|---|---|
+|-----|-----|-----|
 | 강옥일 | PM / GCP Architecture / Full-stack | 문제 정의, 역할 조율, GCP 배포 아키텍처 설계, API-ML 비동기 연결, 프론트엔드/백엔드 통합 구현 |
 | 김민아 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
 | 최지우 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
