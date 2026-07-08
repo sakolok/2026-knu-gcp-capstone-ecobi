@@ -45,13 +45,13 @@ Ecobi는 사용자의 목표 체중, 하루 권장 칼로리, 알레르기, 음�
 
 ## 핵심 기여
 
-- **GCP 아키텍처 설계:** Firebase Hosting, Cloud Run API, Cloud Tasks, Cloud Run ML, Cloud SQL을 연결해 프론트엔드 요청과 ML 추천 연산이 분리되는 구조를 설계했습니다.
-- **API/ML 서비스 분리 구현:** Node.js/Express API와 Python 추천 파이프라인을 각각 Cloud Run 서비스로 배포해 런타임, 의존성, 스케일링 경계를 나눴습니다.
-- **비동기 추천 처리 전환:** 추천 요청을 동기 계산에서 `runId` 기반 job 생성 흐름으로 바꿔 사용자는 접수 상태를 즉시 받고, 결과는 polling으로 조회하도록 구성했습니다.
-- **Cloud Tasks 큐잉 적용:** API가 직접 ML 연산을 붙잡지 않고 Cloud Tasks를 통해 ML 서비스로 POST 요청을 전달하도록 구현했습니다.
-- **Cloud SQL scoped loading 개선:** 전체 테이블을 읽는 방식 대신 `run_id`, 끼니, 예산, 후보군, 최근 사용자 이력 중심으로 필요한 데이터만 로딩하도록 ML 데이터 접근 범위를 줄였습니다.
-- **운영 관측성 확보:** Cloud Logging에 API logs와 ML timing logs를 남겨 단계별 지연 구간을 추적할 수 있게 했습니다.
-- **배포 자동화 정리:** Cloud Build로 API/ML 이미지를 빌드하고 Artifact Registry에 push한 뒤 Cloud Run에 분리 배포하도록 배포 스크립트와 설정을 정리했습니다.
+| Problem | Solution | Result |
+|---|---|---|
+| 추천 계산이 API 요청 안에서 동기 처리되면 사용자가 25~36초 동안 응답을 기다려야 했습니다. | `recommendation_runs`에 작업 context를 저장하고 `runId`를 즉시 반환한 뒤, Cloud Tasks가 Cloud Run ML 서비스로 추천 작업을 전달하도록 바꿨습니다. | 초기 응답을 0.68초로 줄이고, 사용자는 polling으로 생성 상태와 결과를 확인할 수 있게 했습니다. |
+| Node.js API와 Python ML 파이프라인을 한 런타임에 묶으면 의존성, 배포, 스케일링 경계가 불명확해졌습니다. | Cloud Run API와 Cloud Run ML을 분리하고, API는 요청/상태/결과 조회, ML은 추천 계산만 담당하도록 역할을 나눴습니다. | API와 ML 서비스를 독립적으로 배포하고, ML 작업 특성에 맞게 별도 리소스와 concurrency를 적용할 수 있게 했습니다. |
+| ML 추천 시 전체 테이블을 읽으면 Cloud SQL 전송량과 DataFrame 생성 비용이 커졌습니다. | `run_id`, 끼니, 예산, 후보군, 최근 사용자 이력 중심으로 필요한 데이터만 읽는 scoped loading 방식으로 바꿨습니다. | ML 데이터 로딩 범위를 20,863 rows에서 1,183 rows로 줄였습니다. |
+| 추천 결과만 보여주면 사용자가 왜 해당 식단이 추천됐는지 이해하기 어려웠습니다. | API에서 Vertex AI Gemini를 호출해 추천 설명과 자연어 식단 해석을 제공하도록 연결했습니다. | 추천 결과에 설명 가능성을 더해 사용자가 예산, 칼로리, 선호도 기준을 함께 이해할 수 있게 했습니다. |
+| API/ML 병목 구간을 운영 중에 확인하기 어려웠습니다. | Cloud Logging에 API logs와 ML timing logs를 남기고, 단계별 처리 시간을 기록했습니다. | 추천 요청, ML 실행, 결과 저장 과정의 지연 구간을 추적할 수 있게 했습니다. |
 
 ## Result
 
