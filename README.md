@@ -1,39 +1,76 @@
 # Ecobi
 
-> 남은 칼로리와 이번 주 식비를 함께 고려해 식사를 추천하는 예산 기반 식단 관리 서비스
+> GCP 기반 예산 맞춤 식단 추천 서비스
 
-Ecobi는 사용자의 목표 체중, 하루 권장 칼로리, 알레르기, 음식 선호도, 주간 식비 예산을 바탕으로 오늘 먹을 수 있는 식사를 추천하고 기록하는 모바일 중심 웹 애플리케이션입니다. 단순 칼로리 기록이 아니라 “오늘 얼마나 먹을 수 있는지”와 “이번 주 예산 안에서 무엇을 먹을 수 있는지”를 동시에 보여주는 것을 목표로 했습니다.
+Ecobi는 남은 칼로리와 주간 식비 예산을 함께 계산해 사용자가 오늘 선택할 수 있는 식사를 추천하는 모바일 웹 애플리케이션입니다. 저는 PM으로 문제 정의와 역할 조율을 맡고, Firebase Hosting, Cloud Run API/ML, Cloud Tasks, Cloud SQL로 이어지는 GCP 아키텍처와 풀스택 구현을 주도했습니다.
 
-- Live Demo: https://knu-jerry-kang91558149.web.app
-- API Health: https://ecobi-service-673317980620.asia-northeast3.run.app/api/v1/health
+## Tech Stack
+
+**Frontend**
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+
+**Backend / ML**
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+
+**Google Cloud**
+
+![Firebase Hosting](https://img.shields.io/badge/Firebase%20Hosting-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Cloud Run](https://img.shields.io/badge/Cloud%20Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Cloud SQL](https://img.shields.io/badge/Cloud%20SQL-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Cloud Tasks](https://img.shields.io/badge/Cloud%20Tasks-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Vertex AI Gemini](https://img.shields.io/badge/Vertex%20AI%20Gemini-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Secret Manager](https://img.shields.io/badge/Secret%20Manager-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Cloud Logging](https://img.shields.io/badge/Cloud%20Logging-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Artifact Registry](https://img.shields.io/badge/Artifact%20Registry-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Cloud Build](https://img.shields.io/badge/Cloud%20Build-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+
+## Architecture
+
+![Ecobi GCP Architecture](assets/readme/ecobi-architecture.png)
+
+1. 사용자는 Firebase Hosting으로 배포된 React 모바일 웹에 접속합니다.
+2. 프론트엔드는 Firebase rewrite를 통해 Cloud Run API의 `/api/v1/**` 엔드포인트를 호출합니다.
+3. Cloud Run API는 `recommendation_runs`를 생성하고 `runId`를 즉시 반환합니다.
+4. 무거운 추천 계산은 Cloud Tasks가 Cloud Run ML 서비스의 `/recommend`로 전달합니다.
+5. Cloud Run ML은 `run_id` 기준으로 필요한 데이터만 Cloud SQL에서 읽고, MILP 후보 생성, LightFM retrieval, XGBoost rerank, MMR 반복 패널티, macro fit 점수를 반영해 추천 결과를 저장합니다.
+6. 사용자는 `runId`로 상태를 polling하고, API는 저장된 추천 결과와 Gemini 기반 설명을 반환합니다.
+
+## 핵심 기여
+
+- **GCP 아키텍처 설계:** Firebase Hosting, Cloud Run API, Cloud Tasks, Cloud Run ML, Cloud SQL을 연결해 프론트엔드 요청과 ML 추천 연산이 분리되는 구조를 설계했습니다.
+- **API/ML 서비스 분리 구현:** Node.js/Express API와 Python 추천 파이프라인을 각각 Cloud Run 서비스로 배포해 런타임, 의존성, 스케일링 경계를 나눴습니다.
+- **비동기 추천 처리 전환:** 추천 요청을 동기 계산에서 `runId` 기반 job 생성 흐름으로 바꿔 사용자는 접수 상태를 즉시 받고, 결과는 polling으로 조회하도록 구성했습니다.
+- **Cloud Tasks 큐잉 적용:** API가 직접 ML 연산을 붙잡지 않고 Cloud Tasks를 통해 ML 서비스로 POST 요청을 전달하도록 구현했습니다.
+- **Cloud SQL scoped loading 개선:** 전체 테이블을 읽는 방식 대신 `run_id`, 끼니, 예산, 후보군, 최근 사용자 이력 중심으로 필요한 데이터만 로딩하도록 ML 데이터 접근 범위를 줄였습니다.
+- **운영 관측성 확보:** Cloud Logging에 API logs와 ML timing logs를 남겨 단계별 지연 구간을 추적할 수 있게 했습니다.
+- **배포 자동화 정리:** Cloud Build로 API/ML 이미지를 빌드하고 Artifact Registry에 push한 뒤 Cloud Run에 분리 배포하도록 배포 스크립트와 설정을 정리했습니다.
+
+## Result
+
+| 개선 영역 | 변경 전 | 변경 후 |
+|---|---:|---:|
+| 추천 요청 응답 흐름 | 25~36초 동기 대기 | `runId` 0.68초 응답 후 polling |
+| ML 데이터 로딩 범위 | 20,863 rows | 1,183 rows |
+| 음식 검색 응답 payload | 4.0MB | 1.7KB |
 
 ## 주요 기능
 
-- 회원가입/로그인 및 온보딩
-  - 목표 체중, 현재 체중, 활동량, 식사 시간, 알레르기, 선호/비선호 음식, 주간 예산을 입력합니다.
-- 홈 대시보드
-  - 오늘 남은 칼로리, 이번 주 남은 식비, 섭취한 영양소, 최근 식단 기록을 한 화면에서 확인합니다.
-- 식단 기록
-  - 음식 검색, 직접 입력, 식사 타입 선택을 통해 식단을 기록하고 칼로리와 지출을 누적합니다.
-- 예산 기반 식단 추천
-  - 남은 칼로리와 남은 식비를 기준으로 추천 후보를 보여주고, 추천 기록/피드백을 저장합니다.
-- 체중 및 체성분 기록
-  - 체중, 체지방률, 골격근량을 기록하고 변화 추이를 확인합니다.
-- 회복 루틴
-  - 과식 또는 예산 초과 상황에서 다음 식사와 행동 체크리스트를 제안합니다.
-- 주간 식단 계획
-  - 한 주 단위의 식단 후보를 생성하고 예산 흐름을 관리합니다.
+- 목표 체중, 활동량, 알레르기, 선호/비선호 음식, 주간 예산 기반 온보딩
+- 오늘 남은 칼로리, 이번 주 남은 식비, 섭취 영양소를 보여주는 홈 대시보드
+- 음식 검색, 직접 입력, 식사 타입 선택을 통한 식단 기록
+- 남은 칼로리와 예산을 함께 고려한 식단 추천 및 피드백 저장
+- 체중, 체지방률, 골격근량 기록과 변화 추이 확인
+- 과식 또는 예산 초과 상황을 위한 회복 루틴 제안
 
-## 화면 구성
-
-- 시작/온보딩: 사용자 목표와 제약 조건을 수집합니다.
-- 홈: 칼로리, 예산, 영양소, 오늘 기록을 요약합니다.
-- 추천: 예산 절약, 고단백, 맞춤 추천 등 기준별 식단 후보를 제공합니다.
-- 기록: 식단, 체중, 예산을 빠르게 입력합니다.
-- 회복: 초과 섭취 또는 예산 초과 이후의 조정 행동을 안내합니다.
-- 마이페이지: 목표, 예산, 알레르기, 음식 선호도, 계정 정보를 관리합니다.
-
-## 화면 미리보기
+## Screens
 
 | 홈 | 추천 | 기록 |
 |---|---|---|
@@ -43,43 +80,7 @@ Ecobi는 사용자의 목표 체중, 하루 권장 칼로리, 알레르기, 음�
 |---|---|
 | <img src="assets/readme/recovery.jpg" width="220" alt="회복 화면" /> | <img src="assets/readme/mypage.jpg" width="220" alt="마이페이지 화면" /> |
 
-## 기술 스택
-
-| 영역 | 사용 기술 |
-|---|---|
-| Frontend | React, TypeScript, Vite, CSS |
-| Backend | Node.js, Express, TypeScript |
-| Database | SQLite for local development, PostgreSQL/Cloud SQL for production |
-| ML Recommendation | Python, MILP, MMR, LightFM, XGBoost |
-| AI Explanation | Vertex AI Gemini |
-| Cloud | Firebase Hosting, Cloud Run, Cloud SQL, Cloud Tasks, Artifact Registry |
-| Quality | ESLint, TypeScript, Vitest |
-
-## 아키텍처
-
-```text
-Firebase Hosting
-  └─ React mobile web app
-       └─ /api/v1/** rewrite
-            └─ Cloud Run API (Express)
-                 ├─ Cloud SQL / PostgreSQL
-                 ├─ Vertex AI Gemini
-                 └─ Cloud Tasks
-                      └─ Cloud Run ML Service
-                           └─ Python recommendation pipeline
-```
-
-운영 환경에서는 프론트엔드를 Firebase Hosting에 배포하고, API와 ML 추천 서비스를 각각 Cloud Run으로 분리했습니다. API 서버는 사용자/식단/예산/추천 요청을 처리하고, 무거운 추천 계산은 Cloud Tasks를 통해 ML 전용 Cloud Run 서비스로 위임합니다.
-
-## 구현 포인트
-
-- Express API와 React UI를 분리하면서도 로컬 개발에서는 SQLite로 빠르게 실행할 수 있도록 구성했습니다.
-- 운영 DB는 PostgreSQL/Cloud SQL을 사용하고, 로컬 DB와 운영 DB의 쿼리 호환성을 테스트로 검증합니다.
-- 추천 요청은 동기 API 호출만으로 처리하지 않고 `recommendation_runs`와 Cloud Tasks 기반 작업 흐름으로 분리했습니다.
-- ML 추천 파이프라인은 Node 서버에 직접 묶지 않고 Python 패키지와 별도 Cloud Run 서비스로 분리했습니다.
-- 민감 정보는 `.env`에만 두고, GitHub에는 `.env.example`만 포함합니다.
-
-## 로컬 실행
+## Local Development
 
 ```bash
 npm install
@@ -90,29 +91,18 @@ npm run dev
 
 기본 주소:
 
-- Frontend: http://127.0.0.1:5173
-- API: http://127.0.0.1:4000/api/v1
-- Health: http://127.0.0.1:4000/api/v1/health
+- Frontend: `http://127.0.0.1:5173`
+- API: `http://127.0.0.1:4000/api/v1`
+- Health: `http://127.0.0.1:4000/api/v1/health`
 
-개별 실행:
+API와 웹을 개별 실행할 수도 있습니다.
 
 ```bash
 npm run start:api
 npm run dev:web
 ```
 
-## 품질 확인
-
-```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
-```
-
-## ML 추천 로컬 실행
-
-추천 API를 Python ML 파이프라인과 연결하려면 Python 의존성을 설치하고 ML 어댑터를 활성화합니다.
+## ML Recommender
 
 ```bash
 python3 -m venv .venv
@@ -129,9 +119,18 @@ ML_PYTHON_PATH=/absolute/path/to/python
 
 자세한 내용은 [ML/README.md](ML/README.md)를 참고하세요.
 
-## 배포
+## Quality Check
 
-API와 ML 서비스를 분리해 배포하는 방식을 권장합니다.
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+## Deployment
+
+API와 ML 서비스를 분리해 배포합니다.
 
 ```bash
 chmod +x deploy-split.sh
@@ -144,3 +143,14 @@ chmod +x deploy-split.sh
 chmod +x deploy-frontend-firebase.sh
 ./deploy-frontend-firebase.sh
 ```
+
+## Team
+
+| 이름 | 역할 | 담당 |
+|---|---|---|
+| 강옥일 | PM / GCP Architecture / Full-stack | 문제 정의, 역할 조율, GCP 배포 아키텍처 설계, API-ML 비동기 연결, 프론트엔드/백엔드 통합 구현 |
+| 김민아 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
+| 최지우 | Frontend | 모바일 웹 화면 구현, 사용자 플로우 구성, React UI 컴포넌트 개발 |
+| 현지민 | Backend REST API | REST API 설계, 요청/응답 구조 정리, 백엔드 서비스 로직 구현 |
+| 허지환 | Database | 사용자, 식단, 예산, 추천 데이터 중심의 ERD 및 DB 구조 설계 |
+| 김진섭 | AI Recommendation | MILP, LightFM, XGBoost, MMR 기반 추천 알고리즘 설계 및 실험 |
