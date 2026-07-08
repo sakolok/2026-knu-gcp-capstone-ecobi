@@ -61,6 +61,27 @@ Ecobi는 사용자의 목표 체중, 하루 권장 칼로리, 알레르기, 음�
 | ML 데이터 로딩 범위 | 20,863 rows | 1,183 rows | 약 94.3% 감소 |
 | 음식 검색 응답 payload | 4.0MB | 1.7KB | 약 99.96% 감소 |
 
+## Recommendation Pipeline
+
+Ecobi의 추천은 사용자의 끼니, 남은 예산, 남은 칼로리, 음식 선호도, 알레르기 정보를 기반으로 후보 식단을 생성하고 재정렬합니다.
+
+1. API가 `recommendation_runs`에 추천 요청 context를 저장하고 `runId`를 반환합니다.
+2. Cloud Tasks가 Cloud Run ML 서비스에 추천 작업을 전달합니다.
+3. ML 서비스는 `run_id` 기준으로 필요한 데이터만 Cloud SQL에서 조회합니다.
+4. MILP 후보 생성 후 LightFM retrieval, XGBoost rerank, macro fit, MMR 반복 패널티를 반영해 최종 후보를 정렬합니다.
+5. 추천 결과는 `recommendation_candidates`에 저장되고, API는 polling 결과와 Gemini 기반 추천 설명을 반환합니다.
+
+## Data Model
+
+| 테이블 | 역할 |
+|---|---|
+| `users`, `user_profiles` | 사용자 계정, 목표 체중, 활동량, 주간 예산, 식사 채널 저장 |
+| `foods`, `food_logs` | 음식 영양 정보와 사용자의 실제 식단 기록 저장 |
+| `meal_candidates`, `meal_candidate_items` | 추천 후보 식단과 후보를 구성하는 음식 목록 저장 |
+| `recommendation_runs` | 추천 요청 context, job 상태, dispatcher, 요청 시점 저장 |
+| `recommendation_candidates` | ML 추천 결과, 점수, 순위, 선택 여부 저장 |
+| `user_item_interactions` | 추천 선택/피드백 기반 개인화 신호 저장 |
+
 ## 주요 기능
 
 - 목표 체중, 활동량, 알레르기, 선호/비선호 음식, 주간 예산 기반 온보딩
